@@ -1,1 +1,876 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sân Cỏ Numerator - Quản Lý Quỹ Đội</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sân Cỏ Numerator" />
+  <meta name="theme-color" content="#004A52" />
 
+  <link id="app-apple-touch-icon" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23004A52'/%3E%3Ccircle cx='90' cy='82' r='54' fill='%231AA7B7' stroke='%23FFD61F' stroke-width='5'/%3E%3Ctext x='90' y='99' font-size='56' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3Ctext x='90' y='156' font-family='system-ui,-apple-system,sans-serif' font-weight='900' font-size='12' fill='%23FFD61F' text-anchor='middle' letter-spacing='0.5'%3ES%C3%82N C%E1%BB%8E%3C/text%3E%3C/svg%3E" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23004A52'/%3E%3Ccircle cx='90' cy='82' r='54' fill='%231AA7B7' stroke='%23FFD61F' stroke-width='5'/%3E%3Ctext x='90' y='99' font-size='56' text-anchor='middle'%3E%E2%9A%BD%3C/text%3E%3Ctext x='90' y='156' font-family='system-ui,-apple-system,sans-serif' font-weight='900' font-size='12' fill='%23FFD61F' text-anchor='middle' letter-spacing='0.5'%3ES%C3%82N C%E1%BB%8E%3C/text%3E%3C/svg%3E" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kantar: {
+              sumo: '#004A52',
+              blue: '#1AA7B7',
+              yellow: '#FFD61F'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    @keyframes pulse-fast { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .animate-sync { animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen pb-16 select-none">
+
+  <!-- Header -->
+  <header class="bg-kantar-sumo text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-md mx-auto px-4 py-2.5 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-futbol text-2xl text-kantar-yellow"></i>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="font-bold text-base leading-tight">Sân Cỏ Numerator</h1>
+            <span id="cloud-status-badge" onclick="openCloudModal()" class="cursor-pointer text-[10px] bg-black/20 hover:bg-black/40 border border-white/20 px-1.5 py-0.5 rounded-full flex items-center gap-1 font-medium transition">
+              <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+              <span id="cloud-status-text">Đang tải...</span>
+            </span>
+          </div>
+          <p class="text-xs text-kantar-blue mt-0.5" id="role-indicator">Vai trò: Cầu thủ (Xem & Điểm danh)</p>
+        </div>
+      </div>
+      <button onclick="toggleRoleModal()" class="text-xs bg-black/20 hover:bg-black/40 border border-white/20 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition shadow-sm">
+        <i class="fa-solid fa-user-shield text-kantar-yellow" id="role-btn-icon"></i>
+        <span id="role-btn-text" class="font-medium">Vào quyền Đội trưởng</span>
+      </button>
+    </div>
+
+    <!-- Thanh chọn 2 trận trong tuần -->
+    <div class="max-w-md mx-auto px-4 pb-2.5 pt-1">
+      <div class="grid grid-cols-2 gap-2 bg-black/20 p-1 rounded-xl">
+        <button id="btn-match-1" onclick="switchMatch(0)" class="py-2 text-xs font-bold rounded-lg bg-white text-kantar-sumo shadow transition flex items-center justify-center space-x-1">
+          <i class="fa-regular fa-calendar-check mr-1"></i><span id="label-match-1">Trận 1</span>
+        </button>
+        <button id="btn-match-2" onclick="switchMatch(1)" class="py-2 text-xs font-semibold rounded-lg text-white hover:bg-black/20 transition flex items-center justify-center space-x-1">
+          <i class="fa-regular fa-calendar-check mr-1"></i><span id="label-match-2">Trận 2</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto px-4 pt-3 space-y-3">
+    <!-- Banner Đội trưởng -->
+    <div id="captain-banner" class="hidden bg-kantar-yellow text-slate-900 p-2.5 rounded-xl shadow-sm text-xs flex items-center justify-between font-medium">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-crown text-amber-600 text-sm"></i>
+        <span><b>Chế độ Đội trưởng:</b> Quản lý trận đấu, quỹ đội và duyệt chi.</span>
+      </div>
+    </div>
+
+    <!-- Thanh chuyển Tab -->
+    <div class="flex bg-slate-200 p-1 rounded-xl text-xs font-bold shadow-inner">
+      <button id="tab-btn-attend" onclick="switchTab('attend')" class="flex-1 py-2 rounded-lg transition bg-white text-kantar-sumo shadow-sm">
+        <i class="fa-solid fa-user-check mr-1"></i> Trận đấu
+      </button>
+      <button id="tab-btn-fund" onclick="switchTab('fund')" class="flex-1 py-2 rounded-lg transition text-slate-500 hover:text-slate-700">
+        <i class="fa-solid fa-wallet mr-1"></i> Quỹ Đội
+      </button>
+      <button id="tab-btn-history" onclick="switchTab('history')" class="flex-1 py-2 rounded-lg transition text-slate-500 hover:text-slate-700">
+        <i class="fa-solid fa-clock-rotate-left mr-1"></i> Lịch sử
+      </button>
+    </div>
+
+    <!-- TAB 1: TRẬN ĐẤU & ĐIỂM DANH -->
+    <div id="tab-attend" class="space-y-3">
+      <!-- Info Card -->
+      <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200">
+        <div class="flex justify-between items-start pb-2 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-kantar-sumo flex items-center gap-1.5" id="match-title">Trận 1: Thứ 5 - Sân 7</h2>
+              <span id="match-lock-badge" class="hidden text-[10px] bg-red-100 text-red-700 border border-red-200 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <i class="fa-solid fa-lock text-[9px]"></i>Đã khóa DD
+              </span>
+              <span id="match-processed-badge" class="hidden text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <i class="fa-solid fa-check-double text-[9px]"></i>Đã Trừ Quỹ
+              </span>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+              <span id="disp-match-time"><i class="fa-regular fa-clock mr-1"></i>19:00 - 20:30</span><span>•</span>
+              <span id="disp-match-venue"><i class="fa-solid fa-location-dot mr-1"></i>Sân bóng</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-slate-500">Đã báo đi</span>
+            <div class="text-lg font-black text-kantar-blue" id="total-slots">0 suất</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-2.5 text-center">
+          <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+            <span class="text-[10px] text-slate-500 block">Tiền sân</span>
+            <span class="text-xs font-bold text-slate-700" id="disp-pitch-fee">0đ</span>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-2 border border-slate-100">
+            <span class="text-[10px] text-slate-500 block">Nước/bóng</span>
+            <span class="text-xs font-bold text-slate-700" id="disp-water-fee">0đ</span>
+          </div>
+          <div class="bg-teal-50 rounded-xl p-2 border border-teal-100 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-teal-500 text-white text-[8px] font-bold px-1 rounded-bl">~1k</div>
+            <span class="text-[10px] text-teal-600 font-bold block">Chia ra</span>
+            <span class="text-xs font-black text-teal-700" id="disp-fee-per-person">0đ</span>
+          </div>
+        </div>
+
+        <!-- Captain Controls (Match) -->
+        <div id="captain-controls" class="hidden mt-3 pt-3 border-t border-dashed border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-700"><i class="fa-solid fa-gear"></i> Setup Trận Đấu</span>
+            <button onclick="openEditMatchModal()" class="text-[11px] text-blue-600 hover:underline font-semibold">Sửa thông tin</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500">Tiền sân (VNĐ):</label>
+              <input type="number" id="input-pitch" class="w-full text-xs p-2 rounded-lg border border-slate-300 font-semibold disabled:bg-slate-100 disabled:text-slate-400" onchange="updateFees()" />
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500">Tiền nước/bóng:</label>
+              <input type="number" id="input-water" class="w-full text-xs p-2 rounded-lg border border-slate-300 font-semibold disabled:bg-slate-100 disabled:text-slate-400" onchange="updateFees()" />
+            </div>
+          </div>
+          <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg border text-xs">
+            <span class="text-slate-700 font-medium">🧤 Giảm giá GK:</span>
+            <select id="select-gk-discount" onchange="updateGkDiscount(this.value)" class="text-xs p-1 bg-white border rounded font-semibold text-kantar-sumo disabled:bg-slate-100 disabled:text-slate-400">
+              <option value="50">Giảm 50%</option><option value="100">Free 100%</option><option value="0">Không giảm</option>
+            </select>
+          </div>
+
+          <!-- 2 Nút mới: Khóa và Trừ tiền -->
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button id="btn-toggle-lock" onclick="toggleMatchLock()" class="py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-white shadow-sm">
+              <i class="fa-solid fa-lock" id="icon-toggle-lock"></i> <span id="text-toggle-lock">Khóa DD</span>
+            </button>
+            <button id="btn-process-fund" onclick="processMatchFund()" class="py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-white shadow-sm">
+              <i class="fa-solid fa-money-bill-transfer" id="icon-process-fund"></i> <span id="text-process-fund">Trừ Quỹ</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button onclick="openShuffleTeamsModal()" class="text-[11px] bg-slate-100 text-slate-700 font-bold py-2 rounded-lg border hover:bg-slate-200 transition">🎲 Chia 2 đội</button>
+            <button onclick="openResetModal()" class="text-[11px] bg-slate-100 text-red-600 font-bold py-2 rounded-lg border hover:bg-red-50 transition"><i class="fa-solid fa-rotate-left"></i> Reset trận</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khung thêm người -->
+      <div class="flex gap-2">
+        <input type="text" id="guest-name" placeholder="Thêm bạn ngoài / cầu thủ mới..." class="flex-1 text-xs px-3 py-2 border rounded-xl disabled:bg-slate-100" onkeydown="if(event.key==='Enter') addGuest()" />
+        <button id="btn-add-guest" onclick="addGuest()" class="bg-kantar-sumo text-white text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-50"><i class="fa-solid fa-user-plus"></i></button>
+      </div>
+
+      <div class="space-y-1.5" id="attendance-list"></div>
+    </div>
+
+    <!-- TAB 2: QUỸ ĐỘI -->
+    <div id="tab-fund" class="hidden space-y-3">
+      <!-- Bảng thông tin CK -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+        <h3 class="font-bold text-slate-800 text-sm mb-2">Quét mã nạp Quỹ</h3>
+        <div class="flex justify-center mb-2"><img id="qr-image" src="" alt="VietQR" class="w-48 h-auto rounded-xl shadow-sm border" /></div>
+        <div class="bg-slate-50 p-2 rounded-xl text-[11px] text-left text-slate-600 space-y-1">
+          <div>Ngân hàng: <b id="bank-name">Techcombank</b></div>
+          <div class="flex items-center justify-between">
+            <div>STK: <b id="bank-acc" class="text-slate-900 text-sm">19037607856011</b></div>
+            <button onclick="copyBankAcc()" class="text-xs bg-slate-200 px-2 py-1 rounded font-bold hover:bg-slate-300"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+          <div>Chủ TK: <b id="bank-owner">BUI VUONG HUNG</b></div>
+        </div>
+        <div id="captain-bank-edit" class="hidden pt-2 mt-2 border-t">
+          <button onclick="openBankModal()" class="text-[11px] text-blue-600 font-bold hover:underline">Sửa tài khoản Ngân hàng nhận</button>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center px-1">
+        <h3 class="font-bold text-slate-800 text-sm">Số dư anh em</h3>
+        <button onclick="generateZaloFundReport()" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition">
+          <i class="fa-solid fa-share-nodes"></i> Báo Zalo
+        </button>
+      </div>
+
+      <div class="space-y-2" id="fund-list"></div>
+    </div>
+
+    <!-- TAB 3: LỊCH SỬ -->
+    <div id="tab-history" class="hidden space-y-2">
+      <div class="bg-white rounded-xl p-3 border shadow-sm flex items-center justify-between">
+        <div class="text-xs font-bold text-slate-700"><i class="fa-solid fa-list text-kantar-sumo"></i> Lịch sử giao dịch quỹ</div>
+        <span class="text-[10px] text-slate-400">100 GD gần nhất</span>
+      </div>
+      <div class="space-y-1.5" id="logs-list"></div>
+    </div>
+  </main>
+
+  <!-- MODALS GIAO DIỆN -->
+  
+  <!-- Modal Nhập PIN -->
+  <div id="pin-modal" onclick="if(event.target===this) closePinModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-xl">
+      <div class="text-center space-y-1">
+        <div class="w-10 h-10 bg-slate-100 text-kantar-sumo rounded-full flex items-center justify-center mx-auto text-lg font-bold"><i class="fa-solid fa-lock"></i></div>
+        <h3 class="font-bold text-slate-800 text-sm">Xác nhận Đội trưởng</h3>
+      </div>
+      <input type="password" id="input-pin" maxlength="6" placeholder="Nhập mã PIN" class="w-full text-center tracking-widest text-lg font-bold py-2 border rounded-xl focus:outline-none focus:border-kantar-sumo" onkeydown="if(event.key==='Enter') verifyPin()" />
+      <div class="flex gap-2">
+        <button onclick="closePinModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 rounded-xl hover:bg-slate-200">Hủy</button>
+        <button onclick="verifyPin()" class="flex-1 py-2 text-xs font-bold text-white bg-kantar-sumo rounded-xl hover:bg-kantar-sumo/90">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Đổi Tên Cầu Thủ -->
+  <div id="edit-player-modal" onclick="if(event.target===this) closeEditPlayerModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-4 space-y-3 shadow-xl">
+      <div class="text-center"><h3 class="font-bold text-slate-800 text-sm">Đổi tên cầu thủ</h3></div>
+      <input type="text" id="edit-player-name-input" class="w-full text-xs p-2 border rounded-lg font-bold focus:outline-none focus:border-kantar-sumo" onkeydown="if(event.key==='Enter') saveEditPlayerModal()" />
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeEditPlayerModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 rounded-xl hover:bg-slate-200">Hủy</button>
+        <button onclick="saveEditPlayerModal()" class="flex-1 py-2 text-xs font-bold text-white bg-kantar-sumo rounded-xl hover:bg-kantar-sumo/90">Lưu tên</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cập nhật trận đấu -->
+  <div id="match-edit-modal" onclick="if(event.target===this) closeEditMatchModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl">
+      <div class="text-center space-y-1">
+        <h3 class="font-bold text-slate-800 text-sm">Cập nhật trận đấu</h3>
+      </div>
+      <div>
+        <label class="text-[11px] font-medium text-slate-600">Thứ / Tên trận:</label>
+        <input type="text" id="edit-match-short" class="w-full text-xs p-2 border rounded-lg font-semibold" placeholder="VD: Thứ 3" />
+      </div>
+      <div>
+        <label class="text-[11px] font-medium text-slate-600">Khung giờ đá:</label>
+        <input type="text" id="edit-match-time" class="w-full text-xs p-2 border rounded-lg" placeholder="VD: 19:00 - 20:30" />
+      </div>
+      <div>
+        <label class="text-[11px] font-medium text-slate-600">Sân bóng:</label>
+        <input type="text" id="edit-match-venue" class="w-full text-xs p-2 border rounded-lg" placeholder="VD: Sân 7" />
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeEditMatchModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 rounded-xl">Hủy</button>
+        <button onclick="saveEditMatchModal()" class="flex-1 py-2 text-xs font-bold text-white bg-kantar-sumo rounded-xl">Lưu lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nạp Quỹ -->
+  <div id="add-fund-modal" onclick="if(event.target===this) closeAddFundModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl text-center">
+      <h3 class="font-bold text-slate-800 text-sm">Nạp tiền vào Quỹ</h3>
+      <p class="text-xs text-kantar-sumo font-bold" id="add-fund-name">...</p>
+      <div class="grid grid-cols-3 gap-1.5 py-2">
+        <button onclick="document.getElementById('add-fund-amount').value='100000'" class="bg-slate-100 hover:bg-slate-200 text-xs font-bold py-1.5 rounded transition">+100k</button>
+        <button onclick="document.getElementById('add-fund-amount').value='200000'" class="bg-slate-100 hover:bg-slate-200 text-xs font-bold py-1.5 rounded transition">+200k</button>
+        <button onclick="document.getElementById('add-fund-amount').value='500000'" class="bg-slate-100 hover:bg-slate-200 text-xs font-bold py-1.5 rounded transition">+500k</button>
+      </div>
+      <input type="number" id="add-fund-amount" placeholder="Hoặc nhập số khác (VD: 300000)" class="w-full text-center text-sm font-bold py-2 border rounded-xl focus:outline-none focus:border-emerald-500" />
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeAddFundModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-xl transition">Hủy</button>
+        <button onclick="confirmAddFund()" class="flex-1 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition">Nạp ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Điều chỉnh số dư -->
+  <div id="adjust-fund-modal" onclick="if(event.target===this) closeAdjustFundModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl text-center">
+      <h3 class="font-bold text-slate-800 text-sm">Điều chỉnh quỹ (Sửa lỗi)</h3>
+      <p class="text-[11px] text-slate-500">Chỉ dùng khi cần set lại số dư cho <b id="adjust-fund-name" class="text-slate-800">...</b></p>
+      <div class="text-left space-y-2">
+        <div>
+          <label class="text-[10px] font-bold text-slate-500">Số dư MỚI cần đổi thành:</label>
+          <input type="number" id="adjust-fund-amount" class="w-full text-center text-sm font-bold py-2 border rounded-xl focus:outline-none focus:border-amber-500" placeholder="Ví dụ: 0 hoặc 50000" />
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-slate-500">Lý do điều chỉnh (Bắt buộc):</label>
+          <input type="text" id="adjust-fund-reason" class="w-full text-xs py-2 px-3 border rounded-xl focus:outline-none focus:border-amber-500" placeholder="VD: Tính nhầm tiền sân tuần trước..." />
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeAdjustFundModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-xl transition">Hủy</button>
+        <button onclick="confirmAdjustFund()" class="flex-1 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition">Lưu số mới</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cấu hình Ngân hàng -->
+  <div id="bank-modal" onclick="if(event.target===this) closeBankModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl">
+      <div class="text-center space-y-1">
+        <h3 class="font-bold text-slate-800 text-sm">Cập nhật Ngân hàng nhận</h3>
+      </div>
+      <div>
+        <label class="text-[11px] font-medium text-slate-600">Ngân hàng (Mã viết tắt):</label>
+        <input type="text" id="bank-input-id" class="w-full text-xs p-2 border rounded-lg" placeholder="VD: TCB, MB, VCB" />
+      </div>
+      <div>
+        <label class="text-[11px] font-medium text-slate-600">Số tài khoản:</label>
+        <input type="text" id="bank-input-acc" class="w-full text-xs p-2 border rounded-lg" placeholder="Nhập STK" />
+      </div>
+      <div>
+        <label class="text-[11px] font-medium text-slate-600">Tên chủ thẻ (Không dấu):</label>
+        <input type="text" id="bank-input-name" class="w-full text-xs p-2 border rounded-lg" placeholder="VD: BUI VUONG HUNG" />
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeBankModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 rounded-xl">Hủy</button>
+        <button onclick="saveBankModal()" class="flex-1 py-2 text-xs font-bold text-white bg-kantar-sumo rounded-xl">Lưu lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Chia 2 Đội -->
+  <div id="teams-modal" onclick="if(event.target===this) closeShuffleTeamsModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 space-y-3 shadow-xl flex flex-col">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-dice text-amber-500 mr-1"></i> Chia Đội Ngẫu Nhiên</h3>
+        <button onclick="closeShuffleTeamsModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto py-1">
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-2.5 space-y-1.5">
+          <div class="font-bold text-xs text-orange-800 border-b border-orange-200 pb-1 flex justify-between"><span>🟠 ĐỘI CAM</span><span id="count-team-orange">0</span></div>
+          <ul id="list-team-orange" class="text-xs space-y-1 text-slate-700"></ul>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-2.5 space-y-1.5">
+          <div class="font-bold text-xs text-blue-800 border-b border-blue-200 pb-1 flex justify-between"><span>🔵 ĐỘI XANH</span><span id="count-team-blue">0</span></div>
+          <ul id="list-team-blue" class="text-xs space-y-1 text-slate-700"></ul>
+        </div>
+      </div>
+      <div class="flex gap-2 pt-2 border-t">
+        <button onclick="shuffleAndGenerateTeams()" class="flex-1 py-2 text-xs font-bold text-orange-700 bg-orange-100 rounded-xl hover:bg-orange-200 transition"><i class="fa-solid fa-arrows-rotate"></i> Xáo lại</button>
+        <button onclick="copyTeamsToZalo()" class="flex-1 py-2 text-xs font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition"><i class="fa-solid fa-share-nodes"></i> Copy Zalo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Xóa -->
+  <div id="delete-modal" onclick="if(event.target===this) closeDeleteModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl text-center">
+      <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-lg"><i class="fa-solid fa-trash-can"></i></div>
+      <h3 class="font-bold text-slate-800 text-sm">Xóa cầu thủ</h3>
+      <p class="text-[11px] text-slate-500" id="delete-modal-msg">Bạn có chắc muốn xóa?</p>
+      <div class="bg-red-50 text-red-700 text-[10px] p-2 rounded-lg font-medium border border-red-100 text-left">
+        ⚠️ Cảnh báo: Việc xóa cầu thủ sẽ làm mất vĩnh viễn Số Dư Quỹ của họ. Nếu họ chỉ nghỉ 1 trận, vui lòng bấm nút "Báo đi" thành dấu X.
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeDeleteModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-xl transition">Hủy</button>
+        <button onclick="confirmDeletePlayer()" class="flex-1 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition">Xóa vĩnh viễn</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Reset -->
+  <div id="reset-modal" onclick="if(event.target===this) closeResetModal()" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl text-center">
+      <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-lg"><i class="fa-solid fa-rotate-left"></i></div>
+      <h3 class="font-bold text-slate-800 text-sm">Reset trận đấu</h3>
+      <p class="text-[11px] text-slate-500">Bạn muốn đưa toàn bộ trạng thái Điểm Danh của trận này về mức mặc định (Chưa ai báo đi)? Tiền quỹ vẫn được giữ nguyên.</p>
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeResetModal()" class="flex-1 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 rounded-xl transition">Hủy</button>
+        <button onclick="confirmResetMatch()" class="flex-1 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition">Reset Ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-full shadow-2xl transition opacity-0 pointer-events-none z-50 whitespace-nowrap font-medium text-center"></div>
+
+  <!-- JAVASCRIPT & FIREBASE LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // DANH SÁCH 14 CẦU THỦ CỐ ĐỊNH
+    const INITIAL_NAMES = [
+      "Vương Hưng", "Văn", "Thành Quân", "Phạm Anh Huy", "A Phước DE", 
+      "Ân Lộc", "A Sỹ DE Kantar", "Kiên Trần", "Hoàng Long", "Chí Trung",
+      "Ngọc Quang", "Nghĩa", "Nhật", "Trí Medline"
+    ];
+
+    let currentRole = 'player'; 
+    let captainPin = '2026';
+    let currentMatchIndex = 0;  
+    let activeTab = 'attend';
+    
+    let targetPlayerIndex = null; 
+    let currentTeams = { teamOrange: [], teamBlue: [] };
+
+    let bankConfig = { bankId: 'Techcombank', accountNo: '19037607856011', accountName: 'BUI VUONG HUNG' };
+    let teamSquad = INITIAL_NAMES.map(name => ({ name: name, balance: 0 }));
+    let fundLogs = [];
+
+    const defaultMatches = [
+      { title: "Trận 1: Thứ 5 - Sân 7", shortName: "Thứ 5", matchTime: "19:00 - 20:30", venue: "Sân 7", pitchFee: 600000, waterFee: 50000, gkDiscount: 50, isLocked: false, isFundProcessed: false, players: [] },
+      { title: "Trận 2: Chủ Nhật", shortName: "Chủ Nhật", matchTime: "17:00 - 18:30", venue: "Sân 7", pitchFee: 600000, waterFee: 50000, gkDiscount: 50, isLocked: false, isFundProcessed: false, players: [] }
+    ];
+    let matches = JSON.parse(JSON.stringify(defaultMatches));
+
+    let db = null; let auth = null; let isCloudReady = false;
+
+    // CẤU HÌNH FIREBASE THẬT
+    const defaultFirebaseConfig = {
+      apiKey: "AIzaSyA0_nnT6-pH3a3V6enn1qN2-mLlSuhuyK8",
+      authDomain: "quy-doi-web-app.firebaseapp.com",
+      projectId: "quy-doi-web-app",
+      storageBucket: "quy-doi-web-app.firebasestorage.app",
+      messagingSenderId: "398579064070",
+      appId: "1:398579064070:web:4ffaab3c04a064d1649287"
+    };
+
+    function escapeHTML(str) { return str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t)); }
+
+    async function executeTransaction(actionCallback) {
+      if (!isCloudReady || !db) { showToast("⏳ Đang kết nối Cloud, vui lòng chờ..."); return; }
+      try {
+        const docRef = doc(db, 'team_fund', 'current_state');
+        await runTransaction(db, async (t) => {
+          const sfDoc = await t.get(docRef);
+          if (sfDoc.exists()) {
+            const data = sfDoc.data();
+            teamSquad = data.teamSquad || teamSquad; matches = data.matches || matches; fundLogs = data.fundLogs || fundLogs;
+          }
+          actionCallback();
+          t.update(docRef, { teamSquad, matches, fundLogs });
+        });
+      } catch (e) { console.error(e); showToast(typeof e === 'string' ? e : "Lỗi thao tác, vui lòng thử lại!"); }
+    }
+
+    async function initializeCloudSync() {
+      updateCloudUI('connecting', 'Đang kết nối...');
+      try {
+        const app = initializeApp(defaultFirebaseConfig);
+        auth = getAuth(app); db = getFirestore(app);
+        try { await signInAnonymously(auth); } catch (e) {}
+        
+        onSnapshot(doc(db, 'team_fund', 'current_state'), (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            matches = data.matches || defaultMatches;
+            teamSquad = data.teamSquad || teamSquad;
+            fundLogs = data.fundLogs || [];
+            if (data.bankConfig) bankConfig = data.bankConfig;
+            if (data.captainPin) captainPin = data.captainPin;
+            
+            // Auto-fill missing default players
+            let squadChanged = false;
+            INITIAL_NAMES.forEach(name => {
+              if (!teamSquad.some(p => p.name === name)) { teamSquad.push({ name: name, balance: 0 }); squadChanged = true; }
+            });
+            matches.forEach(m => {
+              INITIAL_NAMES.forEach(name => {
+                if (!m.players.some(p => p.name === name)) { m.players.push({ name: name, isAttending: false, guestCount: 0, isGk: false }); squadChanged = true; }
+              });
+            });
+            
+            isCloudReady = true; updateCloudUI('live', 'Trực tuyến');
+            if (squadChanged && currentRole === 'captain') syncToCloud(); else renderAll();
+          } else {
+            matches.forEach(m => { m.players = teamSquad.map(p => ({ name: p.name, isAttending: false, guestCount: 0, isGk: false })); });
+            isCloudReady = true; updateCloudUI('live', 'Trực tuyến'); syncToCloud();
+          }
+        }, () => { updateCloudUI('error', 'Lỗi Cloud'); });
+      } catch (err) { updateCloudUI('error', 'Lỗi kết nối'); }
+    }
+
+    async function syncToCloud() {
+      if (!db || !isCloudReady) return;
+      try { await setDoc(doc(db, 'team_fund', 'current_state'), { teamSquad, matches, fundLogs, bankConfig, captainPin }, { merge: true }); } 
+      catch (e) { showToast("⚠️ Không lưu được lên Cloud!"); }
+    }
+
+    function addLog(msg, amount = 0) {
+      fundLogs.unshift({ time: new Date().toISOString(), msg, amount });
+      if (fundLogs.length > 100) fundLogs.length = 100;
+    }
+
+    function updateCloudUI(status, label) {
+      const dot = document.getElementById('cloud-status-dot');
+      const text = document.getElementById('cloud-status-text');
+      if (text) text.textContent = label;
+      if (dot) {
+        if (status === 'live') dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        else if (status === 'connecting') dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-sync";
+        else dot.className = "w-2 h-2 rounded-full bg-red-400";
+      }
+    }
+
+    // Role & Tabs
+    window.toggleRoleModal = function() {
+      if (currentRole === 'captain') { currentRole = 'player'; updateRoleUI(); showToast("Đã thoát quyền!"); } 
+      else { document.getElementById('pin-modal').classList.remove('hidden'); document.getElementById('input-pin').value = ''; }
+    };
+    window.closePinModal = function() { document.getElementById('pin-modal').classList.add('hidden'); };
+    window.verifyPin = function() {
+      if (document.getElementById('input-pin').value === captainPin) {
+        currentRole = 'captain'; window.closePinModal(); updateRoleUI(); showToast("👑 Chào Đội trưởng!");
+      } else showToast("Sai mã PIN!");
+    };
+    function updateRoleUI() {
+      document.getElementById('role-indicator').innerHTML = currentRole === 'captain' ? `<span class="text-kantar-yellow font-bold"><i class="fa-solid fa-crown mr-1"></i>Đội trưởng</span>` : "Vai trò: Cầu thủ (Chỉ xem)";
+      document.getElementById('role-btn-text').textContent = currentRole === 'captain' ? "Thoát quyền" : "Vào quyền Đội trưởng";
+      document.getElementById('role-btn-icon').className = currentRole === 'captain' ? "fa-solid fa-right-from-bracket text-kantar-yellow" : "fa-solid fa-user-shield text-kantar-yellow";
+      document.getElementById('captain-controls').classList.toggle('hidden', currentRole !== 'captain');
+      document.getElementById('captain-banner').classList.toggle('hidden', currentRole !== 'captain');
+      document.getElementById('captain-bank-edit').classList.toggle('hidden', currentRole !== 'captain');
+      renderAll();
+    }
+    window.switchMatch = function(idx) { currentMatchIndex = idx; renderAll(); };
+    window.switchTab = function(tab) {
+      activeTab = tab;
+      ['attend', 'fund', 'history'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).className = "flex-1 py-2 rounded-lg transition text-slate-500 hover:text-slate-700 font-bold";
+      });
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tab}`).className = "flex-1 py-2 rounded-lg transition bg-white text-kantar-sumo shadow-sm font-bold";
+      if (tab === 'fund') updateQR();
+    };
+
+    // Tính toán Match (Có làm tròn Lên Hàng Nghìn theo công thức an toàn)
+    function calculateMatch() {
+      const m = matches[currentMatchIndex];
+      let tSlots=0, outSlots=0, gkCount=0;
+      const gkDisc = Number(m.gkDiscount||50);
+      m.players.filter(p=>p.isAttending).forEach(p => {
+        const slots = 1 + (p.guestCount||0); tSlots += slots;
+        if(p.isGk) { gkCount++; outSlots += (p.guestCount||0); } else outSlots += slots;
+      });
+      const tCost = Number(m.pitchFee||0) + Number(m.waterFee||0);
+      let fpp=0, gkf=0;
+      if (tSlots>0) {
+        const eff = outSlots + (gkCount * (1 - gkDisc/100));
+        // LÀM TRÒN LÊN hàng nghìn
+        fpp = eff>0 ? Math.ceil((tCost/eff)/1000)*1000 : Math.ceil((tCost/tSlots)/1000)*1000;
+        gkf = Math.ceil((fpp * (1 - gkDisc/100))/1000)*1000;
+      }
+      return { tSlots, tCost, fpp, gkf, gkDisc };
+    }
+
+    // Render Data
+    function renderAll() {
+      const m = matches[currentMatchIndex]; if (!m) return;
+      const calc = calculateMatch();
+
+      // UI Trận đấu
+      document.getElementById('btn-match-1').className = currentMatchIndex===0 ? "py-2 text-xs font-bold rounded-lg bg-white text-kantar-sumo shadow transition flex items-center justify-center space-x-1" : "py-2 text-xs font-semibold rounded-lg text-white/70 hover:bg-black/20 transition flex items-center justify-center space-x-1";
+      document.getElementById('btn-match-2').className = currentMatchIndex===1 ? "py-2 text-xs font-bold rounded-lg bg-white text-kantar-sumo shadow transition flex items-center justify-center space-x-1" : "py-2 text-xs font-semibold rounded-lg text-white/70 hover:bg-black/20 transition flex items-center justify-center space-x-1";
+      
+      document.getElementById('match-title').innerHTML = m.title;
+      document.getElementById('disp-match-time').innerHTML = `<i class="fa-regular fa-clock mr-1"></i>${m.matchTime}`;
+      document.getElementById('disp-match-venue').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i>${m.venue}`;
+      document.getElementById('total-slots').textContent = `${calc.tSlots} suất`;
+      document.getElementById('disp-pitch-fee').textContent = `${(m.pitchFee||0).toLocaleString('vi-VN')}đ`;
+      document.getElementById('disp-water-fee').textContent = `${(m.waterFee||0).toLocaleString('vi-VN')}đ`;
+      document.getElementById('disp-fee-per-person').textContent = `${calc.fpp.toLocaleString('vi-VN')}đ`;
+      
+      document.getElementById('input-pitch').value = m.pitchFee; 
+      document.getElementById('input-water').value = m.waterFee;
+      document.getElementById('select-gk-discount').value = m.gkDiscount;
+      
+      // BẢO VỆ GIAO DIỆN KHI ĐÃ CHỐT TRỪ QUỸ (Disable Inputs)
+      document.getElementById('input-pitch').disabled = m.isFundProcessed;
+      document.getElementById('input-water').disabled = m.isFundProcessed;
+      document.getElementById('select-gk-discount').disabled = m.isFundProcessed;
+      document.getElementById('guest-name').disabled = m.isFundProcessed;
+      document.getElementById('btn-add-guest').disabled = m.isFundProcessed;
+
+      // Xử lý nút Khóa & Trừ tiền 
+      const btnLock = document.getElementById('btn-toggle-lock'), textLock = document.getElementById('text-toggle-lock'), iconLock = document.getElementById('icon-toggle-lock');
+      const btnProc = document.getElementById('btn-process-fund'), textProc = document.getElementById('text-process-fund'), iconProc = document.getElementById('icon-process-fund');
+      const badgeLock = document.getElementById('match-lock-badge');
+      const badgeProc = document.getElementById('match-processed-badge');
+
+      if (m.isFundProcessed) {
+        badgeProc.classList.remove('hidden'); badgeLock.classList.add('hidden');
+        btnLock.className = "py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 text-slate-400 bg-slate-100 cursor-not-allowed";
+        btnLock.disabled = true; textLock.textContent = "Đã khóa cứng";
+        
+        btnProc.className = "py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-white bg-slate-400 hover:bg-slate-500 shadow-sm";
+        textProc.textContent = "Hủy Chốt (Hoàn quỹ)"; iconProc.className = "fa-solid fa-rotate-left";
+      } else {
+        badgeProc.classList.add('hidden'); btnLock.disabled = false;
+        
+        if (m.isLocked) {
+          badgeLock.classList.remove('hidden');
+          btnLock.className = "py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-slate-700 bg-slate-200 hover:bg-slate-300 shadow-sm";
+          textLock.textContent = "Mở khóa DD"; iconLock.className = "fa-solid fa-lock-open";
+        } else {
+          badgeLock.classList.add('hidden');
+          btnLock.className = "py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-slate-800 bg-kantar-yellow hover:bg-amber-400 shadow-sm";
+          textLock.textContent = "Khóa điểm danh"; iconLock.className = "fa-solid fa-lock";
+        }
+        
+        btnProc.className = "py-2.5 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-white bg-red-600 hover:bg-red-700 shadow-sm";
+        textProc.textContent = "Chốt & Trừ Quỹ"; iconProc.className = "fa-solid fa-money-bill-transfer";
+      }
+
+      // Danh sách Điểm danh
+      const listEl = document.getElementById('attendance-list'); listEl.innerHTML = '';
+      m.players.forEach((p, idx) => {
+        const sq = teamSquad.find(s=>s.name===p.name) || {balance:0};
+        const balAlert = sq.balance < 0 ? `<span class="text-[9px] bg-red-100 text-red-700 px-1 rounded ml-1 font-bold">Nợ quỹ</span>` : (sq.balance < calc.fpp ? `<span class="text-[9px] bg-amber-100 text-amber-700 px-1 rounded ml-1 font-bold">Sắp hết</span>` : '');
+        
+        // Khóa giao diện điểm danh nếu đã Chốt quỹ (không ai được chạm vào) HOẶC Đã khóa (chỉ Đội trưởng chạm)
+        const isFundLocked = m.isFundProcessed;
+        const isDDLocked = m.isLocked && currentRole !== 'captain';
+        const disLock = isFundLocked || isDDLocked; 
+        const disTitle = isFundLocked ? "Đã trừ quỹ! Hãy Hủy chốt để sửa." : (isDDLocked ? "Đã khóa điểm danh!" : "");
+        
+        let capBtns = (currentRole==='captain' && !isFundLocked) ? `<button onclick="openEditPlayerModal(${idx})" class="text-slate-400 hover:text-blue-600 px-1"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="requestDeletePlayer(${idx})" class="w-6 h-6 rounded bg-red-50 text-red-500 flex items-center justify-center ml-1"><i class="fa-solid fa-trash-can text-[10px]"></i></button>` : '';
+        
+        listEl.innerHTML += `
+          <div class="p-2.5 rounded-xl border flex items-center justify-between transition ${p.isAttending ? 'bg-white border-kantar-sumo/30 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-70'}">
+            <div class="flex items-center space-x-2">
+              <button onclick="toggleAttend(${idx})" class="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${p.isAttending ? 'bg-kantar-sumo text-white' : 'bg-slate-200 text-slate-400'} ${disLock?'opacity-50 cursor-not-allowed':''}" ${disLock?'disabled':''} title="${disTitle}"><i class="fa-solid ${p.isAttending?'fa-check':'fa-xmark'}"></i></button>
+              <div>
+                <div class="text-xs font-bold text-slate-800 flex items-center gap-1"><span class="${p.isAttending?'':'line-through text-slate-400'}">${p.name}</span>${balAlert}${capBtns}</div>
+                ${p.isAttending ? `<div class="flex gap-1 mt-0.5"><button onclick="toggleGk(${idx})" class="text-[9px] px-1.5 rounded-md border font-bold ${p.isGk?'bg-amber-100 text-amber-800 border-amber-300':'bg-slate-100 text-slate-500'} ${disLock?'opacity-50 cursor-not-allowed':''}" ${disLock?'disabled':''} title="${disTitle}">🧤 ${p.isGk?'Gôn':'GK?'}</button></div>` : ''}
+              </div>
+            </div>
+            ${p.isAttending ? `<div class="flex items-center bg-slate-100 rounded-lg p-0.5 border text-xs ${disLock?'opacity-50':''}"><button onclick="changeGuest(${idx}, -1)" ${disLock?'disabled':''} class="w-6 h-6 rounded font-bold ${disLock?'cursor-not-allowed':''}">-</button><span class="px-1 text-[11px] font-bold">+${p.guestCount||0}</span><button onclick="changeGuest(${idx}, 1)" ${disLock?'disabled':''} class="w-6 h-6 rounded font-bold ${disLock?'cursor-not-allowed':''}">+</button></div>` : `<button onclick="toggleAttend(${idx})" ${disLock?'disabled':''} class="text-[10px] bg-slate-200 px-2 py-1 rounded font-bold text-slate-500 ${disLock?'opacity-50 cursor-not-allowed':''}" title="${disTitle}">Báo đi</button>`}
+          </div>`;
+      });
+
+      renderFundList(); renderLogs();
+    }
+
+    function renderFundList() {
+      const el = document.getElementById('fund-list'); el.innerHTML = '';
+      const calc = calculateMatch();
+      teamSquad.sort((a,b)=>b.balance - a.balance).forEach((p, idx) => {
+        let tag = p.balance < 0 ? `<span class="bg-red-100 text-red-700 text-[10px] px-1.5 py-0.5 rounded font-bold">Nợ quỹ</span>` : (p.balance < calc.fpp ? `<span class="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded font-bold">Sắp hết</span>` : `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">Đủ đá</span>`);
+        let capBtns = currentRole==='captain' ? `<div class="flex gap-1"><button onclick="openAdjustFundModal(${idx})" class="bg-amber-100 hover:bg-amber-200 text-amber-700 px-2 py-1 rounded font-bold shadow-sm transition" title="Điều chỉnh/Sửa lỗi"><i class="fa-solid fa-scale-balanced"></i> Sửa</button><button onclick="openAddFundModal(${idx})" class="bg-kantar-blue hover:bg-kantar-sumo text-white px-2 py-1 rounded font-bold shadow-sm transition">+ Nạp</button></div>` : '';
+        el.innerHTML += `<div class="bg-white p-2.5 rounded-xl border flex justify-between items-center shadow-sm"><div><div class="text-xs font-bold text-slate-800">${p.name} ${tag}</div><div class="text-sm font-black ${p.balance<0?'text-red-600':'text-kantar-sumo'} mt-0.5">${p.balance.toLocaleString('vi-VN')}đ</div></div>${capBtns}</div>`;
+      });
+    }
+
+    function renderLogs() {
+      const el = document.getElementById('logs-list'); el.innerHTML = '';
+      if (fundLogs.length===0) el.innerHTML = '<div class="text-center py-4 text-xs text-slate-400">Chưa có giao dịch nào</div>';
+      fundLogs.forEach(l => {
+        const d = new Date(l.time); const tStr = `${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const amtStr = l.amount > 0 ? `<span class="text-emerald-600 font-bold">+${l.amount.toLocaleString()}đ</span>` : (l.amount < 0 ? `<span class="text-red-600 font-bold">${l.amount.toLocaleString()}đ</span>` : '');
+        el.innerHTML += `<div class="bg-white p-2 rounded-lg border border-slate-100 flex justify-between items-start text-[11px]"><div class="flex-1"><div class="text-slate-800 font-medium">${l.msg}</div><div class="text-slate-400 text-[9px] mt-0.5">${tStr}</div></div><div class="flex-shrink-0 ml-2 text-right">${amtStr}</div></div>`;
+      });
+    }
+
+    // Logic Tính tiền & Khóa (BẢO VỆ DỮ LIỆU)
+    window.updateFees = () => { executeTransaction(() => { const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Đã trừ quỹ, không thể sửa tiền sân. Hãy Hủy Chốt trước!"; m.pitchFee=Number(document.getElementById('input-pitch').value)||0; m.waterFee=Number(document.getElementById('input-water').value)||0; }); };
+    window.updateGkDiscount = (v) => { executeTransaction(() => { const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Đã trừ quỹ, không thể sửa giá GK."; m.gkDiscount=Number(v)||0; }); };
+    window.toggleMatchLock = () => { executeTransaction(() => { if(currentRole!=='captain')throw"Chỉ Đội trưởng!"; const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận đã trừ tiền thì không cần mở khóa."; m.isLocked = !m.isLocked; }); };
+
+    // TÍNH NĂNG CHỐT TRỪ QUỸ (CHỐT / HỦY CHỐT AN TOÀN)
+    window.processMatchFund = () => {
+      executeTransaction(() => {
+        if(currentRole!=='captain')throw"Chỉ Đội trưởng mới được dùng!";
+        const m = matches[currentMatchIndex];
+        const calc = calculateMatch();
+        if (m.isFundProcessed) {
+          // Hủy Chốt -> Hoàn tiền (Vì lúc trừ đã khóa mọi thao tác sửa, nên tiền hoàn lại CHẮC CHẮN bằng tiền đã trừ)
+          m.players.filter(p=>p.isAttending).forEach(p => {
+            const sq = teamSquad.find(s=>s.name===p.name);
+            if(sq) { const amt = p.isGk ? (calc.gkf + (p.guestCount||0)*calc.fpp) : ((1+(p.guestCount||0))*calc.fpp); sq.balance += amt; }
+          });
+          m.isFundProcessed = false; m.isLocked = true; // Hủy chốt thì vẫn giữ khóa DD để anh em khỏi sửa bậy
+          addLog(`[HỦY CHỐT] Hoàn tiền ${m.shortName}`);
+          showToast("Đã hoàn lại tiền quỹ cho toàn đội!");
+        } else {
+          // Chốt -> Trừ tiền
+          if(calc.tSlots===0) throw "❌ Không có ai đá để trừ quỹ!";
+          m.players.filter(p=>p.isAttending).forEach(p => {
+            const sq = teamSquad.find(s=>s.name===p.name);
+            if(sq) { const amt = p.isGk ? (calc.gkf + (p.guestCount||0)*calc.fpp) : ((1+(p.guestCount||0))*calc.fpp); sq.balance -= amt; }
+          });
+          m.isFundProcessed = true; m.isLocked = true;
+          addLog(`[ĐÁ XONG] Trừ tiền ${m.shortName} (${calc.tSlots} suất)`);
+          showToast(`Đã trừ thành công quỹ của ${calc.tSlots} suất!`);
+        }
+      });
+    };
+
+    // Điểm danh (BẢO VỆ LỖ HỔNG)
+    window.toggleAttend = (i) => { executeTransaction(()=>{ const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ. Hãy bấm 'Hủy Chốt' nếu muốn sửa danh sách!"; if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; m.players[i].isAttending=!m.players[i].isAttending; if(!m.players[i].isAttending){m.players[i].guestCount=0; m.players[i].isGk=false;} }); };
+    window.toggleGk = (i) => { executeTransaction(()=>{ const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ. Hãy bấm 'Hủy Chốt' trước!"; if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; m.players[i].isGk=!m.players[i].isGk; }); };
+    window.changeGuest = (i, d) => { executeTransaction(()=>{ const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ. Hãy bấm 'Hủy Chốt' trước!"; if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; m.players[i].guestCount=Math.max(0,(m.players[i].guestCount||0)+d); }); };
+    
+    window.addGuest = () => {
+      const v = document.getElementById('guest-name').value.trim(); if(!v)return; const name=escapeHTML(v);
+      executeTransaction(() => {
+        const m = matches[currentMatchIndex]; 
+        if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ. Hãy bấm 'Hủy Chốt' trước khi thêm người!";
+        if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!";
+        if(!teamSquad.some(s=>s.name===name)) teamSquad.push({name, balance:0}); // Cấp ví cho người mới
+        matches.forEach(ma => { if(!ma.players.some(p=>p.name===name)) ma.players.push({name, isAttending:false, guestCount:0, isGk:false}); });
+        const p = matches[currentMatchIndex].players.find(pl=>pl.name===name); p.isAttending=true;
+      });
+      document.getElementById('guest-name').value='';
+      showToast(`Đã thêm cầu thủ/ví quỹ: ${name}`);
+    };
+
+    // Đội trưởng Nạp / Sửa quỹ
+    window.openAddFundModal = (i) => { targetPlayerIndex=i; document.getElementById('add-fund-name').textContent=teamSquad[i].name; document.getElementById('add-fund-amount').value=''; document.getElementById('add-fund-modal').classList.remove('hidden'); };
+    window.closeAddFundModal = () => document.getElementById('add-fund-modal').classList.add('hidden');
+    window.confirmAddFund = () => {
+      const amt = Number(document.getElementById('add-fund-amount').value); if(!amt||amt<=0)return showToast("Nhập số tiền hợp lệ!");
+      executeTransaction(() => {
+        const pName = teamSquad[targetPlayerIndex].name;
+        teamSquad[targetPlayerIndex].balance += amt;
+        addLog(`Nạp quỹ: ${pName}`, amt);
+      });
+      closeAddFundModal(); showToast("Đã nạp tiền thành công!");
+    };
+
+    window.openAdjustFundModal = (i) => { 
+      targetPlayerIndex=i; 
+      document.getElementById('adjust-fund-name').textContent=teamSquad[i].name; 
+      document.getElementById('adjust-fund-amount').value = teamSquad[i].balance; 
+      document.getElementById('adjust-fund-reason').value=''; 
+      document.getElementById('adjust-fund-modal').classList.remove('hidden'); 
+    };
+    window.closeAdjustFundModal = () => document.getElementById('adjust-fund-modal').classList.add('hidden');
+    window.confirmAdjustFund = () => {
+      const newAmt = document.getElementById('adjust-fund-amount').value; 
+      const rsn = document.getElementById('adjust-fund-reason').value.trim();
+      if(newAmt==='' || !rsn) return showToast("Phải nhập số dư mới và Ghi rõ lý do điều chỉnh!");
+      executeTransaction(() => {
+        const pName = teamSquad[targetPlayerIndex].name;
+        const oldAmt = teamSquad[targetPlayerIndex].balance;
+        const diff = Number(newAmt) - oldAmt;
+        teamSquad[targetPlayerIndex].balance = Number(newAmt);
+        addLog(`[SỬA LỖI] ${pName}: ${escapeHTML(rsn)}`, diff);
+      });
+      closeAdjustFundModal(); showToast("Đã lưu số dư mới!");
+    };
+
+    // Xóa & Đổi tên
+    window.requestDeletePlayer = (i) => { 
+      if(currentRole!=='captain') return;
+      if (matches[currentMatchIndex].isFundProcessed) return showToast("❌ Trận này ĐÃ TRỪ QUỸ. Không thể xóa người lúc này!");
+      targetPlayerIndex=i; document.getElementById('delete-modal-msg').innerHTML=`Xóa <b>${matches[currentMatchIndex].players[i].name}</b>?`; document.getElementById('delete-modal').classList.remove('hidden'); 
+    };
+    window.closeDeleteModal = () => document.getElementById('delete-modal').classList.add('hidden');
+    window.confirmDeletePlayer = () => {
+      executeTransaction(() => {
+        const name = matches[currentMatchIndex].players[targetPlayerIndex].name;
+        matches.forEach(m => { m.players = m.players.filter(p=>p.name!==name); });
+        teamSquad = teamSquad.filter(s=>s.name!==name); // Xóa sạch cả ví quỹ
+      });
+      closeDeleteModal(); showToast("Đã xóa vĩnh viễn cầu thủ & Ví quỹ!");
+    };
+
+    window.openEditPlayerModal = (i) => { 
+      if (matches[currentMatchIndex].isFundProcessed) return showToast("❌ Trận này ĐÃ TRỪ QUỸ. Hủy chốt mới được đổi tên!");
+      targetPlayerIndex=i; document.getElementById('edit-player-name-input').value=matches[currentMatchIndex].players[i].name; document.getElementById('edit-player-modal').classList.remove('hidden'); 
+    };
+    window.closeEditPlayerModal = () => document.getElementById('edit-player-modal').classList.add('hidden');
+    window.saveEditPlayerModal = () => {
+      const v = document.getElementById('edit-player-name-input').value.trim(); if(!v)return; const newName=escapeHTML(v);
+      executeTransaction(() => {
+        const oldName = matches[currentMatchIndex].players[targetPlayerIndex].name;
+        const sq = teamSquad.find(s=>s.name===oldName); if(sq) sq.name=newName;
+        matches.forEach(m => { const p = m.players.find(pl=>pl.name===oldName); if(p) p.name=newName; });
+      });
+      closeEditPlayerModal(); showToast("Đã lưu tên mới!");
+    };
+
+    // Cập nhật Ngân hàng và Trận
+    window.openBankModal = () => {
+      document.getElementById('bank-input-id').value = bankConfig.bankId;
+      document.getElementById('bank-input-acc').value = bankConfig.accountNo;
+      document.getElementById('bank-input-name').value = bankConfig.accountName;
+      document.getElementById('bank-modal').classList.remove('hidden');
+    };
+    window.closeBankModal = () => document.getElementById('bank-modal').classList.add('hidden');
+    window.saveBankModal = () => {
+      const bId=document.getElementById('bank-input-id').value.trim(), bAcc=document.getElementById('bank-input-acc').value.trim(), bName=document.getElementById('bank-input-name').value.trim().toUpperCase();
+      if(bAcc&&bName) { bankConfig.bankId=bId||'MB'; bankConfig.accountNo=bAcc; bankConfig.accountName=bName; syncToCloud(); updateQR(); closeBankModal(); showToast("Đã cập nhật TK Ngân hàng!"); }
+    };
+    window.openEditMatchModal = () => { const c=matches[currentMatchIndex]; document.getElementById('edit-match-short').value=c.shortName||''; document.getElementById('edit-match-time').value=c.matchTime||''; document.getElementById('edit-match-venue').value=c.venue||''; document.getElementById('match-edit-modal').classList.remove('hidden'); };
+    window.closeEditMatchModal = () => document.getElementById('match-edit-modal').classList.add('hidden');
+    window.saveEditMatchModal = () => { executeTransaction(()=>{ const c=matches[currentMatchIndex], s=document.getElementById('edit-match-short').value.trim(); if(s){c.shortName=s; c.title=`Trận ${currentMatchIndex+1}: ${s}`;} c.matchTime=document.getElementById('edit-match-time').value.trim(); c.venue=document.getElementById('edit-match-venue').value.trim(); }); closeEditMatchModal(); };
+
+    // Reset Trận (BẢO VỆ)
+    window.openResetModal = () => document.getElementById('reset-modal').classList.remove('hidden');
+    window.closeResetModal = () => document.getElementById('reset-modal').classList.add('hidden');
+    window.confirmResetMatch = () => {
+      executeTransaction(() => {
+        const m = matches[currentMatchIndex];
+        if (m.isFundProcessed) throw "❌ LỖI: Không thể Reset trận đã Trừ tiền! Bạn phải Hủy chốt để hoàn tiền trước, nếu không tiền sẽ bị mất dấu vết!";
+        m.isLocked = false;
+        m.players.forEach(p => { p.isAttending = false; p.guestCount = 0; p.isGk = false; });
+      });
+      closeResetModal(); showToast("Đã Reset sạch điểm danh trận này!");
+    };
+
+    // Chia Đội
+    window.openShuffleTeamsModal = () => { shuffleAndGenerateTeams(); document.getElementById('teams-modal').classList.remove('hidden'); };
+    window.closeShuffleTeamsModal = () => document.getElementById('teams-modal').classList.add('hidden');
+    window.shuffleAndGenerateTeams = () => {
+      const m = matches[currentMatchIndex]; const attending = m.players.filter(p=>p.isAttending);
+      if(attending.length<2) return showToast("Cần ít nhất 2 người để chia đội!");
+      let pg=[], pf=[];
+      attending.forEach(p=>{ if(p.isGk) pg.push(p.name+'(🧤)'); else pf.push(p.name); for(let i=1;i<=(p.guestCount||0);i++) pf.push(`Bạn của ${p.name}`); });
+      const sf = (a) => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+      pg=sf(pg); pf=sf(pf); const to=[], tb=[];
+      pg.forEach((g,i)=>{ if(i%2===0) to.push(g); else tb.push(g); });
+      pf.forEach(p=>{ if(to.length<=tb.length) to.push(p); else tb.push(p); });
+      currentTeams = {teamOrange:to, teamBlue:tb};
+      document.getElementById('count-team-orange').textContent = to.length; document.getElementById('count-team-blue').textContent = tb.length;
+      document.getElementById('list-team-orange').innerHTML = to.map(n=>`<li>${n}</li>`).join('');
+      document.getElementById('list-team-blue').innerHTML = tb.map(n=>`<li>${n}</li>`).join('');
+    };
+    window.copyTeamsToZalo = () => {
+      let t=`⚽ ĐỘI HÌNH ĐÁ TẬP - ${(matches[currentMatchIndex].title||'').toUpperCase()}\n`; t+=`🟠 ĐỘI CAM (${currentTeams.teamOrange.length}):\n`; currentTeams.teamOrange.forEach((n,i)=>t+=`${i+1}. ${n}\n`); t+=`\n🔵 ĐỘI XANH (${currentTeams.teamBlue.length}):\n`; currentTeams.teamBlue.forEach((n,i)=>t+=`${i+1}. ${n}\n`);
+      copyToClipboard(t); showToast("Đã copy đội hình!");
+    };
+
+    // Zalo Báo cáo
+    window.generateZaloFundReport = () => {
+      let txt = `📊 BÁO CÁO QUỸ ĐỘI SÂN CỎ\n-------------------\n`;
+      const noQuy = teamSquad.filter(p=>p.balance<0); const sapHet = teamSquad.filter(p=>p.balance>=0 && p.balance<60000);
+      if(noQuy.length>0) { txt+=`🔴 ĐANG NỢ QUỸ (Cần nạp):\n`; noQuy.forEach(p=>txt+=`- ${p.name}: ${p.balance.toLocaleString()}đ\n`); txt+=`\n`; }
+      if(sapHet.length>0) { txt+=`🟡 SẮP HẾT QUỸ:\n`; sapHet.forEach(p=>txt+=`- ${p.name}: ${p.balance.toLocaleString()}đ\n`); txt+=`\n`; }
+      txt+=`🏦 THÔNG TIN NẠP QUỸ:\n- ${bankConfig.bankId}\n- STK: ${bankConfig.accountNo}\n- Tên: ${bankConfig.accountName}\n- Nội dung: [Tên bạn] Nap Quy\n`;
+      copyToClipboard(txt); showToast("Đã copy báo cáo Zalo!");
+    };
+
+    // QR & Utilities
+    function updateQR() {
+      const q = `https://img.vietqr.io/image/${bankConfig.bankId}-${bankConfig.accountNo}-compact2.png?amount=200000&addInfo=Nap Quy&accountName=${encodeURIComponent(bankConfig.accountName)}`;
+      document.getElementById('qr-image').src=q;
+      document.getElementById('bank-name').textContent=bankConfig.bankId; document.getElementById('bank-acc').textContent=bankConfig.accountNo; document.getElementById('bank-owner').textContent=bankConfig.accountName;
+    }
+    window.copyBankAcc = () => { copyToClipboard(bankConfig.accountNo); showToast("Copy thành công!"); };
+    function copyToClipboard(t) { const el=document.createElement('textarea'); el.value=t; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); }
+    function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('opacity-0','pointer-events-none'); setTimeout(()=>t.classList.add('opacity-0','pointer-events-none'), 3000); }
+    
+    document.addEventListener('DOMContentLoaded', () => { updateRoleUI(); initializeCloudSync(); switchTab('attend'); });
+  </script>
+</body>
+</html>
