@@ -288,7 +288,7 @@
     const INITIAL_NAMES = [
       "Vương Hưng", "Văn", "Thành Quân", "Phạm Anh Huy", "A Phước DE", 
       "Ân Lộc", "A Sỹ DE Kantar", "Kiên Trần", "Hoàng Long", "Chí Trung",
-      "Ngọc Quang", "Nghĩa", "Nhật", "Trí Medline"
+      "Ngọc Quang", "Nghĩa", "Nhật"
     ];
 
     let currentRole = 'player'; 
@@ -348,12 +348,8 @@
             matches = data.matches || defaultMatches; teamSquad = data.teamSquad || teamSquad; fundLogs = data.fundLogs || [];
             if (data.bankConfig) bankConfig = data.bankConfig; if (data.captainPin) captainPin = data.captainPin;
             
-            let squadChanged = false;
-            INITIAL_NAMES.forEach(name => { if (!teamSquad.some(p => p.name === name)) { teamSquad.push({ name: name, balance: 0 }); squadChanged = true; } });
-            matches.forEach(m => { INITIAL_NAMES.forEach(name => { if (!m.players.some(p => p.name === name)) { m.players.push({ name: name, isAttending: false, guestCount: 0, isGk: false }); squadChanged = true; } }); });
-            
             isCloudReady = true; updateCloudUI('live', 'Trực tuyến');
-            if (squadChanged && currentRole === 'captain') syncToCloud(); else renderAll();
+            renderAll();
           } else {
             matches.forEach(m => { m.players = teamSquad.map(p => ({ name: p.name, isAttending: false, guestCount: 0, isGk: false })); });
             isCloudReady = true; updateCloudUI('live', 'Trực tuyến'); syncToCloud();
@@ -477,17 +473,24 @@
       const listEl = document.getElementById('attendance-list'); listEl.innerHTML = '';
       m.players.forEach((p, idx) => {
         const sq = teamSquad.find(s=>s.name===p.name) || {balance:0};
-        const balAlert = sq.balance < 0 ? `<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wider ml-1.5">Nợ quỹ</span>` : (sq.balance < 50000 ? `<span class="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wider ml-1.5">Cần nạp</span>` : '');
-        const disLock = isFundLocked || (m.isLocked && currentRole !== 'captain'); 
-        const disTitle = isFundLocked ? "Đã trừ quỹ!" : (m.isLocked ? "Đã khóa!" : "");
+        
+        // CƠ CHẾ KHÓA NỢ QUỸ
+        const isDebtBlocked = sq.balance <= -50000;
+        let balAlert = '';
+        if (isDebtBlocked) balAlert = `<span class="text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider ml-1.5 shadow-sm"><i class="fa-solid fa-ban"></i> Cấm túc</span>`;
+        else if (sq.balance < 0) balAlert = `<span class="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wider ml-1.5">Nợ quỹ</span>`;
+        else if (sq.balance < 50000) balAlert = `<span class="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-black uppercase tracking-wider ml-1.5">Cần nạp</span>`;
+        
+        const disLock = isFundLocked || (m.isLocked && currentRole !== 'captain') || (isDebtBlocked && !p.isAttending); 
+        const disTitle = isFundLocked ? "Đã trừ quỹ!" : (m.isLocked && currentRole !== 'captain' ? "Đã khóa!" : (isDebtBlocked && !p.isAttending ? "Đang nợ quỹ, không thể điểm danh!" : ""));
         
         let capBtns = (currentRole==='captain' && !isFundLocked) ? `<button onclick="openEditPlayerModal(${idx})" class="text-slate-400 hover:text-kantar-blue w-6 h-6 flex items-center justify-center transition"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="requestDeletePlayer(${idx})" class="w-6 h-6 rounded-md bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center ml-0.5 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button>` : '';
         
         // CSS Style cho Tên (Xám mờ gạch ngang vs Rõ nét)
         const nameStyle = p.isAttending ? 'text-sm font-extrabold text-slate-800' : 'text-xs font-semibold text-slate-400 line-through opacity-80';
-        const cardStyle = p.isAttending ? 'bg-white border-kantar-blue/30 shadow-md scale-[1.01]' : 'bg-slate-50 border-slate-200';
-        const checkboxStyle = p.isAttending ? 'checkbox-checked' : 'checkbox-unchecked';
-        const iconCheck = p.isAttending ? 'fa-check' : '';
+        const cardStyle = p.isAttending ? 'bg-white border-kantar-blue/30 shadow-md scale-[1.01]' : (isDebtBlocked ? 'bg-red-50/40 border-red-100' : 'bg-slate-50 border-slate-200');
+        const checkboxStyle = p.isAttending ? 'checkbox-checked' : (isDebtBlocked ? 'bg-slate-200 text-slate-400 border-slate-200' : 'checkbox-unchecked');
+        const iconCheck = p.isAttending ? 'fa-check' : (isDebtBlocked ? 'fa-lock' : '');
 
         listEl.innerHTML += `
           <div class="p-3.5 rounded-2xl border-2 flex items-center justify-between transition-all duration-300 ${cardStyle}">
@@ -561,7 +564,20 @@
       });
     };
 
-    window.toggleAttend = (i) => { executeTransaction(()=>{ const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ."; if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; m.players[i].isAttending=!m.players[i].isAttending; if(!m.players[i].isAttending){m.players[i].guestCount=0; m.players[i].isGk=false;} }); };
+    window.toggleAttend = (i) => { 
+      executeTransaction(()=>{ 
+        const m=matches[currentMatchIndex]; 
+        if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ."; 
+        if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; 
+        
+        // CHẶN NHỮNG AI NỢ TỪ 50K TRỞ LÊN
+        const sq = teamSquad.find(s=>s.name===m.players[i].name) || {balance:0};
+        if (!m.players[i].isAttending && sq.balance <= -50000) throw "❌ Cầu thủ đang nợ quỹ từ 50k trở lên. Phải nạp quỹ trước khi điểm danh!";
+        
+        m.players[i].isAttending=!m.players[i].isAttending; 
+        if(!m.players[i].isAttending){m.players[i].guestCount=0; m.players[i].isGk=false;} 
+      }); 
+    };
     window.toggleGk = (i) => { executeTransaction(()=>{ const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ."; if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; m.players[i].isGk=!m.players[i].isGk; }); };
     window.changeGuest = (i, d) => { executeTransaction(()=>{ const m=matches[currentMatchIndex]; if(m.isFundProcessed) throw "❌ Trận này ĐÃ TRỪ QUỸ."; if(m.isLocked&&currentRole!=='captain')throw"Đã khóa!"; m.players[i].guestCount=Math.max(0,(m.players[i].guestCount||0)+d); }); };
     
